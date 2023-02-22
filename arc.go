@@ -77,6 +77,37 @@ func archivePath() string {
     return strings.Join([]string{archive, "zip"}, ".");
 }
 
+func extractManifest() {
+    fileName := archivePath()
+
+    archive, err := zip.OpenReader(fileName)
+
+    check(err)
+
+    defer archive.Close()
+
+    for _, f := range archive.File {
+        filePath := f.Name
+
+        if f.FileInfo().IsDir() || f.Name != "manifest.json" {
+            continue
+        }
+
+        dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+        check(err)
+
+        fileInArchive, err := f.Open()
+        check(err)
+
+        if _, err := io.Copy(dstFile, fileInArchive); err != nil {
+            panic(err)
+        }
+
+        dstFile.Close()
+        fileInArchive.Close()
+    }
+}
+
 func extractArchive() {
     fileName := archivePath()
 
@@ -88,6 +119,10 @@ func extractArchive() {
 
     for _, f := range archive.File {
         filePath := f.Name
+
+        if f.Name == "manifest.json" {
+            continue
+        }
 
         if f.FileInfo().IsDir() {
             os.MkdirAll(filePath, os.ModePerm)
@@ -352,14 +387,27 @@ func downloadBlock() {
 }
 
 func install() {
-    // New Order
     // Step 1. Check if Arcadia theme
+    // checkDirectory()
+
     // Step 2. Download Block
+    // downloadBlock()
+
     // Step 3. Extract & Read Manifest
+    // extractManifest()
+    // readManifest()
+
     // Step 4. Check if installed
+    // checkInstalled()
+
     // Step 5. Extract Archive
+    // extractArchive()
+
     // Step 6. Install
+    // installBlock()
+
     // Step 7. Clean up
+    // cleanUp()
 
     // block = os.Args[1]
     archive = "faq"
@@ -384,7 +432,7 @@ func install() {
 }
 
 func version() {
-    fmt.Println("0.1.0")
+    fmt.Println("0.1.0-beta")
 }
 
 func main() {
