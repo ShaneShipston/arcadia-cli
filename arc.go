@@ -326,7 +326,7 @@ func modifyTheme() {
             found := false
 
             for index, currentLine := range fileContents {
-                if (currentLine == target) {
+                if (strings.Contains(currentLine, target)) {
                     found = true
 
                     switch mode {
@@ -337,9 +337,9 @@ func modifyTheme() {
                         fileContents = append(fileContents[:index+1], fileContents[index:]...)
                         fileContents[index] = config["code"].(string)
                     case "replace":
-                        fileContents[index] = config["code"].(string)
+                        fileContents[index] = strings.Replace(fileContents[index], target, config["code"].(string), 1)
                     case "remove":
-                        fileContents = append(fileContents[:index], fileContents[index+1:]...)
+                        fileContents[index] = strings.Replace(fileContents[index], target, "", 1)
                     }
 
                     continue OUTER
