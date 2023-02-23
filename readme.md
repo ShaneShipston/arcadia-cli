@@ -56,7 +56,7 @@ Below is the example code for a simple block
     "key": "call_to_action",
     "type": "block",
     "acfgroup": "group_610ca48968b82",
-    "append": {
+    "modifications": {
         "src/scss/style.scss": "@import \"blocks/call_to_action\";"
     }
 }
@@ -76,4 +76,5 @@ Below is the example code for a simple block
 - [ ] Install Foundations
 - [ ] Install Sections
 - [ ] Install Plugins
+- [ ] Unpack command
 - [ ] Search

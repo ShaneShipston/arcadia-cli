@@ -16,7 +16,6 @@ import (
 )
 
 var archive = ""
-var block = ""
 var manifest map[string]interface{}
 
 func init() {
@@ -66,8 +65,9 @@ func checkInstalled() {
     for _, element := range layouts {
         layout := element.(map[string]interface{})
 
-        if layout["name"] == block {
-            fmt.Println("A block with that name has already been installed")
+        if layout["name"] == manifest["key"] {
+            fmt.Println(manifest["name"].(string) + " has already been installed")
+            cleanUp()
             os.Exit(0)
         }
     }
@@ -362,6 +362,7 @@ func installBlock() {
 
 func cleanUp() {
     os.Remove(archivePath())
+    os.Remove("manifest.json")
 }
 
 func downloadBlock() {
@@ -387,48 +388,31 @@ func downloadBlock() {
 }
 
 func install() {
+    archive = "faq"
+
     // Step 1. Check if Arcadia theme
-    // checkDirectory()
+    checkDirectory()
 
     // Step 2. Download Block
-    // downloadBlock()
-
-    // Step 3. Extract & Read Manifest
-    // extractManifest()
-    // readManifest()
-
-    // Step 4. Check if installed
-    // checkInstalled()
-
-    // Step 5. Extract Archive
-    // extractArchive()
-
-    // Step 6. Install
-    // installBlock()
-
-    // Step 7. Clean up
-    // cleanUp()
-
-    // block = os.Args[1]
-    archive = "faq"
-    block = "faq"
-
-    // Step 1: Verify
-    checkDirectory()
-    checkInstalled()
-
-    // Step 2: Download
     downloadBlock()
 
-    // Step 3: Extract
-    extractArchive()
+    // Step 3. Extract & Read Manifest
+    extractManifest()
     readManifest()
 
-    // Step 4: Install
+    // Step 4. Check if installed
+    checkInstalled()
+
+    // Step 5. Extract Archive
+    extractArchive()
+
+    // Step 6. Install
     installBlock()
 
-    // Step 5: Clean up
+    // Step 7. Clean up
     cleanUp()
+
+    fmt.Println(manifest["name"].(string) + " has been installed")
 }
 
 func version() {
