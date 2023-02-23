@@ -80,13 +80,13 @@ func archivePath() string {
 func extractManifest() {
     fileName := archivePath()
 
-    archive, err := zip.OpenReader(fileName)
+    archiveFile, err := zip.OpenReader(fileName)
 
     check(err)
 
-    defer archive.Close()
+    defer archiveFile.Close()
 
-    for _, f := range archive.File {
+    for _, f := range archiveFile.File {
         filePath := f.Name
 
         if f.FileInfo().IsDir() || f.Name != "manifest.json" {
@@ -111,13 +111,13 @@ func extractManifest() {
 func extractArchive() {
     fileName := archivePath()
 
-    archive, err := zip.OpenReader(fileName)
+    archiveFile, err := zip.OpenReader(fileName)
 
     check(err)
 
-    defer archive.Close()
+    defer archiveFile.Close()
 
-    for _, f := range archive.File {
+    for _, f := range archiveFile.File {
         filePath := f.Name
 
         if f.Name == "manifest.json" {
@@ -366,19 +366,21 @@ func cleanUp() {
 }
 
 func downloadBlock() {
-    blockUrl := "https://arcadiadocs.com/packages/blocks/faqs/faq1/faq.zip"
+    blockUrl := "https://arcadiadocs.com/download.php?target=" + archive
     resp, err := http.Get(blockUrl)
     if err != nil {
         fmt.Printf("Block not found")
+        os.Exit(0)
     }
 
     defer resp.Body.Close()
 
     if resp.StatusCode != 200 {
         fmt.Printf("Block not found")
+        os.Exit(0)
     }
 
-    out, err := os.Create("faq.zip")
+    out, err := os.Create(archivePath())
     check(err)
 
     defer out.Close()
@@ -388,7 +390,8 @@ func downloadBlock() {
 }
 
 func install() {
-    archive = "faq"
+    // archive = "faq"
+    archive = os.Args[2];
 
     // Step 1. Check if Arcadia theme
     checkDirectory()
@@ -420,12 +423,15 @@ func version() {
 }
 
 func main() {
-    command := "install"
+    // command := "install"
+    command := os.Args[1];
 
     switch command {
     case "install":
         install()
     case "version":
         version()
+    default:
+        fmt.Println("Invalid command.")
     }
 }
