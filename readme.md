@@ -64,17 +64,18 @@ Below is the example code for a simple block
 
 ## Changelog
 
-### Unreleased
+### 0.1.0 Beta
+
+- Install blocks
+- Windows build
 
 ## Roadmap
 
-- [ ] Install Blocks
-- [ ] Windows Install
-- [ ] MacOS Install
-- [ ] Documentation
-- [ ] Install Components
-- [ ] Install Foundations
-- [ ] Install Sections
-- [ ] Install Plugins
-- [ ] Unpack command
-- [ ] Search
+- MacOS Install
+- Documentation
+- Install Components
+- Install Foundations
+- Install Sections
+- Install Plugins
+- Unpack command
+- Search
