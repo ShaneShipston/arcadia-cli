@@ -11,6 +11,7 @@ import (
     "net/http"
     "os"
     "path/filepath"
+    "strconv"
     "strings"
     "time"
 )
@@ -159,43 +160,45 @@ func readManifest() {
     check(err)
 }
 
-func blankLayout() map[string]interface{} {
-    str := `{
-        "key": "",
-        "name": "",
-        "label": "",
-        "display": "block",
-        "sub_fields": [
-            {
-                "key": "field_59eea71bac7ed",
-                "label": "Content",
-                "name": "ctn",
-                "aria-label": "",
-                "type": "clone",
-                "instructions": "",
-                "required": 0,
-                "conditional_logic": 0,
-                "wrapper": {
-                    "width": "",
-                    "class": "",
-                    "id": ""
-                },
-                "clone": [],
-                "display": "seamless",
-                "layout": "block",
-                "prefix_label": 0,
-                "prefix_name": 0
-            }
-        ],
-        "min": "",
-        "max": ""
-    }`
+func blankLayout() []string {
+    layoutKey := randomString(14)
 
-    var newLayout map[string]interface{}
+    str := []string{
+        "\"" + layoutKey + "\": {",
+        "    \"key\": \"" + layoutKey + "\",",
+        "    \"name\": \"" + manifest["key"].(string) + "\",",
+        "    \"label\": \"" + manifest["name"].(string) + "\",",
+        "    \"display\": \"block\",",
+        "    \"sub_fields\": [",
+        "        {",
+        "            \"key\": \"field_" + randomString(8) + "\",",
+        "            \"label\": \"Content\",",
+        "            \"name\": \"ctn\",",
+        "            \"aria-label\": \"\",",
+        "            \"type\": \"clone\",",
+        "            \"instructions\": \"\",",
+        "            \"required\": 0,",
+        "            \"conditional_logic\": 0,",
+        "            \"wrapper\": {",
+        "                \"width\": \"\",",
+        "                \"class\": \"\",",
+        "                \"id\": \"\"",
+        "            },",
+        "            \"clone\": [",
+        "                \"" + manifest["acfgroup"].(string) + "\"",
+        "            ],",
+        "            \"display\": \"seamless\",",
+        "            \"layout\": \"block\",",
+        "            \"prefix_label\": 0,",
+        "            \"prefix_name\": 0",
+        "        }",
+        "    ],",
+        "    \"min\": \"\",",
+        "    \"max\": \"\"",
+        "},",
+    }
 
-    json.Unmarshal([]byte(str), &newLayout)
-
-    return newLayout
+    return str
 }
 
 func openFile(filePath string) ([]string, error) {
@@ -239,43 +242,63 @@ func writeFile(filePath string, fileContents []string) {
 
 func injectLayout() {
     contentFile := filepath.Join("acf-json", "group_572229fc5045c.json")
-    content, err := os.ReadFile(contentFile)
+    content, err := openFile(contentFile)
     now := time.Now()
+    currentTime := strconv.FormatInt(now.Unix(), 10)
 
     check(err)
 
-    var data map[string]interface{}
-
-    err = json.Unmarshal(content, &data)
-
-    check(err)
-
-    layoutKey := randomString(14)
     newLayout := blankLayout()
 
-    newLayout["key"] = layoutKey
-    newLayout["name"] = manifest["key"]
-    newLayout["label"] = manifest["name"]
+    startIndex := 0
+    bracketCount := 0
+    distanceFromBracket := 0
+    matched := false
+    prefix := strings.Repeat(" ", 16)
 
-    subFields := newLayout["sub_fields"].([]interface{})
-    cloneField := subFields[0].(map[string]interface{})
+    for index, line := range content {
+        if startIndex > 0 && !matched {
+            if strings.HasSuffix(line, "{") {
+                bracketCount = bracketCount + 1
 
-    cloneField["key"] = "field_" + randomString(8)
-    cloneField["clone"] = [1]string{manifest["acfgroup"].(string)}
+                if bracketCount == 1 {
+                    distanceFromBracket = 0
+                }
+            } else if bracketCount >= 1 {
+                distanceFromBracket = distanceFromBracket + 1
+            }
 
-    data["modified"] = now.Unix()
+            if strings.Contains(line, "}") {
+                bracketCount = bracketCount - 1
+            }
 
-    fields := data["fields"].([]interface{})
-    firstField := fields[0].(map[string]interface{})
-    layouts := firstField["layouts"].(map[string]interface{})
+            if bracketCount == 1 && strings.Contains(line, "\"label\"") {
+                layoutName := line[strings.Index(line, ":") + 3:len(line) - 2]
 
-    layouts[layoutKey] = newLayout
+                if strings.Compare(manifest["name"].(string), layoutName) < 0 || layoutName == "Page Content (Layouts Only)" {
+                    matched = true
+                    start := index - distanceFromBracket
 
-    file, _ := json.MarshalIndent(data, "", "    ")
+                    for distance, body := range newLayout {
+                        content = append(content[:start+distance+1], content[start+distance:]...)
+                        content[start+distance] = prefix + body
+                    }
+                }
+            }
+        } else if strings.Contains(line, "\"layouts\"") {
+            startIndex = index;
+        }
 
-    err = os.WriteFile(contentFile, file, 0644)
+        if strings.Contains(line, "\"modified\"") {
+            if strings.Contains(line, ",") {
+                content[index] = "    \"modified\": " + currentTime + ","
+            } else {
+                content[index] = "    \"modified\": " + currentTime
+            }
+        }
+    }
 
-    check(err)
+    writeFile(contentFile, content)
 }
 
 func modifyTheme() {
