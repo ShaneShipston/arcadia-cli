@@ -424,34 +424,110 @@ func downloadBlock() {
     check(err)
 }
 
+func catalogArchives() []string {
+    var archives []string
+
+    directory, err := os.Open(".")
+    check(err)
+
+    files, err := directory.Readdir(0)
+    check(err)
+
+    for _, file := range files {
+        if file.IsDir() {
+            continue
+        }
+
+        if filepath.Ext(file.Name()) == ".zip" {
+            valid := false
+            archiveFile, err := zip.OpenReader(file.Name())
+
+            check(err)
+
+            defer archiveFile.Close()
+
+            for _, f := range archiveFile.File {
+                if f.Name == "manifest.json" {
+                    valid = true
+                    break
+                }
+            }
+
+            if valid {
+                archives = append(archives, file.Name())
+            }
+        }
+    }
+
+    return archives
+}
+
 func install() {
-    // archive = "faq"
-    archive = os.Args[2];
+    // archives := make([]string, 3)
+    // archives[0] = "faq"
+    // archives[1] = "nav-bar"
+    // archives[2] = "image-slider"
+    archives := os.Args[2:]
 
     // Step 1. Check if Arcadia theme
     checkDirectory()
 
-    // Step 2. Download Block
-    downloadBlock()
+    for _, file := range archives {
+        archive = file
 
-    // Step 3. Extract & Read Manifest
-    extractManifest()
-    readManifest()
+        // Step 2. Download Block
+        downloadBlock()
 
-    // Step 4. Check if installed
-    checkInstalled()
+        // Step 3. Extract & Read Manifest
+        extractManifest()
+        readManifest()
 
-    // Step 5. Extract Archive
-    extractArchive()
+        // Step 4. Check if installed
+        checkInstalled()
 
-    // Step 6. Install
-    injectLayout()
-    modifyTheme()
+        // Step 5. Extract Archive
+        extractArchive()
 
-    // Step 7. Clean up
-    cleanUp()
+        // Step 6. Install
+        injectLayout()
+        modifyTheme()
 
-    fmt.Println(manifest["name"].(string) + " has been installed")
+        // Step 7. Clean up
+        cleanUp()
+
+        fmt.Println(manifest["name"].(string) + " has been installed")
+    }
+}
+
+func unpack() {
+    // Step 1. Check if Arcadia theme
+    checkDirectory()
+
+    // Step 2: Catalog zips in the project root
+    archives := catalogArchives()
+
+    for _, file := range archives {
+        archive = file[:len(file) - 4]
+
+        // Step 3: Extract manifests one by one
+        extractManifest()
+        readManifest()
+
+        // Step 4. Check if installed
+        checkInstalled()
+
+        // Step 5. Extract Archive
+        extractArchive()
+
+        // Step 6. Install
+        injectLayout()
+        modifyTheme()
+
+        // Step 7. Clean up
+        cleanUp()
+
+        fmt.Println(manifest["name"].(string) + " has been installed")
+    }
 }
 
 func version() {
@@ -465,6 +541,8 @@ func main() {
     switch command {
     case "install":
         install()
+    case "unpack":
+        unpack();
     case "version":
         version()
     default:

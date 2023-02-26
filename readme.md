@@ -4,16 +4,30 @@ A command line utility for installing blocks
 
 ## Usage
 
-Install a block
+### Install blocks
 
 ```bash
-arc install [block_name]
+arc install [blocks]
 ```
 
-Check program version
+As as example, if we wanted to install both FAQ and Call to Action you could run:
+
+```bash
+arc install faq call-to-action
+```
+
+### Check program version
 
 ```bash
 arc version
+```
+
+### Unpack archives
+
+If you've already downloaded a bunch of blocks and added the zip files to your theme you can unpack them to install
+
+```bash
+arc unpack
 ```
 
 ## Manifest Format
@@ -68,15 +82,16 @@ Below is the example code for a simple block
 ### 0.1.0 Beta (Unreleased)
 
 - Install blocks
-- Windows build
 - Install Components
+- Unpack command
+- Windows build
+- Documentation
 
 ## Roadmap
 
 - MacOS Install
-- Documentation
 - Install Foundations
 - Install Sections
 - Install Plugins
-- Unpack command
+- Unpack nested zip files
 - Search
