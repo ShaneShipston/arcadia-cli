@@ -11,12 +11,15 @@ import (
     "net/http"
     "os"
     "path/filepath"
+    "runtime"
     "strconv"
     "strings"
     "time"
 )
 
+var appVersion = "0.1.0"
 var archive = ""
+var updateAvailable = ""
 var manifest map[string]interface{}
 
 func init() {
@@ -530,13 +533,105 @@ func unpack() {
     }
 }
 
+func checkVersion() {
+    checkUrl := "https://arcadiadocs.com/check.php?version=" + appVersion + "&os=" + runtime.GOOS + "&arch=" + runtime.GOARCH
+    resp, err := http.Get(checkUrl)
+
+    if err != nil {
+        return
+    }
+
+    defer resp.Body.Close()
+
+    if resp.StatusCode != 200 {
+        return
+    }
+
+    body, err := io.ReadAll(resp.Body)
+    updateAvailable = string(body)
+}
+
 func version() {
-    fmt.Println("0.1.0-beta")
+    fmt.Println(appVersion)
+}
+
+func update() {
+    if len(updateAvailable) == 0 {
+        fmt.Println("You are on the latest version")
+        return
+    }
+
+    ext := ""
+
+    if runtime.GOOS == "windows" {
+        ext = ".exe"
+    }
+
+    fmt.Println("Updating...")
+
+    appPath, err := os.Executable()
+
+    check(err)
+
+    appDir := filepath.Dir(appPath)
+
+    resp, err := http.Get(updateAvailable)
+
+    if err != nil {
+        fmt.Println("Update failed")
+        return
+    }
+
+    defer resp.Body.Close()
+
+    tmpName := filepath.Join(appDir, "arc-new" + ext);
+    currentName := filepath.Join(appDir, "arc" + ext);
+    oldName := filepath.Join(appDir, "arc-old" + ext);
+
+    out, err := os.Create(tmpName)
+    check(err)
+
+    _, err = io.Copy(out, resp.Body)
+    check(err)
+
+    out.Close()
+
+    err = os.Rename(currentName, oldName)
+    check(err)
+    err = os.Rename(tmpName, currentName)
+    check(err)
+
+    fmt.Println("Update complete")
+}
+
+func updateCleanup() {
+    ext := ""
+
+    if runtime.GOOS == "windows" {
+        ext = ".exe"
+    }
+
+    appPath, err := os.Executable()
+
+    if err != nil {
+        return
+    }
+
+    appDir := filepath.Dir(appPath)
+
+    os.Remove(filepath.Join(appDir, "arc-old" + ext))
 }
 
 func main() {
-    // command := "install"
+    // command := "update"
     command := os.Args[1];
+
+    checkVersion()
+    updateCleanup()
+
+    if command != "update" && len(updateAvailable) > 0 {
+        fmt.Println("Update Available; Run arc update to install")
+    }
 
     switch command {
     case "install":
@@ -545,6 +640,8 @@ func main() {
         unpack();
     case "version":
         version()
+    case "update":
+        update()
     default:
         fmt.Println("Invalid command.")
     }

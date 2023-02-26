@@ -30,6 +30,12 @@ If you've already downloaded a bunch of blocks and added the zip files to your t
 arc unpack
 ```
 
+### Self Updating
+
+```bash
+arc update
+```
+
 ## Manifest Format
 
 | Index         | Purpose                         | Required |
@@ -77,6 +83,19 @@ Below is the example code for a simple block
 }
 ```
 
+## Building
+
+```bash
+# Windows
+GOOS=windows GOARCH=amd64 go build -o bin/arc-windows-amd64.exe arc.go
+
+# MacOS
+GOOS=darwin GOARCH=amd64 go build -o bin/arc-macos-amd64 arc.go
+
+# Apple Silicon
+GOOS=darwin GOARCH=arm64 go build -o bin/arc-macos-arm arc.go
+```
+
 ## Changelog
 
 ### 0.1.0 Beta (Unreleased)
@@ -86,6 +105,7 @@ Below is the example code for a simple block
 - Unpack command
 - Windows build
 - Documentation
+- Update check
 
 ## Roadmap
 
