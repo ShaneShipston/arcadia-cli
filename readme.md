@@ -22,7 +22,7 @@ arc version
 |---------------|---------------------------------|----------|
 | name          | Friendly Block name             | true     |
 | key           | Block file name                 | true     |
-| type          | block, component, section, base | true     |
+| contents      | block, component, section, base | true     |
 | acfgroup      | ACF group name                  | false    |
 | modifications | Which files need to be modified | false    |
 
@@ -32,7 +32,7 @@ Append can be formatted in a couple ways. The below sample indicates that the @i
 "src/scss/style.scss": "@import \"blocks/call_to_action\";"
 ```
 
-Additionally if there are multiple pieces of code that need to be altered. You can include an array of modifications to be performed on a per file basis. For example, the first one will append to the bottom of the file and the second will append after the target.
+Additionally if there are multiple pieces of code that need to be altered. You can include an array of modifications to be performed on a per file basis. For example, the first one will append to the bottom of the file and the second will prepend the target. The mode can consist of either "append", "prepend", "replace" or "remove"
 
 ```json
 "src/scss/style.scss": [
@@ -41,7 +41,8 @@ Additionally if there are multiple pieces of code that need to be altered. You c
     },
     {
         "code": "@import \"blocks/call_to_action\";",
-        "target": "@import \"blocks/accent_image\";"
+        "target": "@import \"blocks/accent_image\";",
+        "mode": "prepend"
     }
 ]
 ```
@@ -64,16 +65,16 @@ Below is the example code for a simple block
 
 ## Changelog
 
-### 0.1.0 Beta
+### 0.1.0 Beta (Unreleased)
 
 - Install blocks
 - Windows build
+- Install Components
 
 ## Roadmap
 
 - MacOS Install
 - Documentation
-- Install Components
 - Install Foundations
 - Install Sections
 - Install Plugins

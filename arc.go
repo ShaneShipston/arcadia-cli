@@ -47,8 +47,24 @@ func checkDirectory() {
     }
 }
 
+func groupName() string {
+    if manifest["contents"] == "component" {
+        return "group_5c903f684a8ae.json"
+    }
+
+    return "group_572229fc5045c.json"
+}
+
+func finalLayout() string {
+    if manifest["contents"] == "component" {
+        return "Widget"
+    }
+
+    return "Page Content (Layouts Only)"
+}
+
 func checkInstalled() {
-    contentFile := filepath.Join("acf-json", "group_572229fc5045c.json")
+    contentFile := filepath.Join("acf-json", groupName())
     content, err := os.ReadFile(contentFile)
 
     check(err)
@@ -241,7 +257,7 @@ func writeFile(filePath string, fileContents []string) {
 }
 
 func injectLayout() {
-    contentFile := filepath.Join("acf-json", "group_572229fc5045c.json")
+    contentFile := filepath.Join("acf-json", groupName())
     content, err := openFile(contentFile)
     now := time.Now()
     currentTime := strconv.FormatInt(now.Unix(), 10)
@@ -249,6 +265,7 @@ func injectLayout() {
     check(err)
 
     newLayout := blankLayout()
+    finalLayout := finalLayout()
 
     startIndex := 0
     bracketCount := 0
@@ -275,7 +292,7 @@ func injectLayout() {
             if bracketCount == 1 && strings.Contains(line, "\"label\"") {
                 layoutName := line[strings.Index(line, ":") + 3:len(line) - 2]
 
-                if strings.Compare(manifest["name"].(string), layoutName) < 0 || layoutName == "Page Content (Layouts Only)" {
+                if strings.Compare(manifest["name"].(string), layoutName) < 0 || layoutName == finalLayout {
                     matched = true
                     start := index - distanceFromBracket
 
@@ -378,11 +395,6 @@ func modifyTheme() {
     }
 }
 
-func installBlock() {
-    injectLayout()
-    modifyTheme()
-}
-
 func cleanUp() {
     os.Remove(archivePath())
     os.Remove("manifest.json")
@@ -433,7 +445,8 @@ func install() {
     extractArchive()
 
     // Step 6. Install
-    installBlock()
+    injectLayout()
+    modifyTheme()
 
     // Step 7. Clean up
     cleanUp()
