@@ -6,6 +6,7 @@ import (
     "encoding/json"
     "errors"
     "fmt"
+    "github.com/pterm/pterm"
     "io"
     "math/rand"
     "net/http"
@@ -45,7 +46,7 @@ func check(e error) {
 
 func checkDirectory() {
     if _, err := os.Stat(filepath.Join("src", "scss", "style.scss")); errors.Is(err, os.ErrNotExist) {
-        fmt.Println("This directory doesn't contain an Arcadia theme")
+        pterm.Error.Println("This directory doesn't contain an Arcadia theme")
         os.Exit(0)
     }
 }
@@ -86,7 +87,7 @@ func checkInstalled() {
         layout := element.(map[string]interface{})
 
         if layout["name"] == manifest["key"] {
-            fmt.Println(manifest["name"].(string) + " has already been installed")
+            pterm.Warning.Println(manifest["name"].(string) + " has already been installed")
             cleanUp()
             os.Exit(0)
         }
@@ -255,7 +256,7 @@ func writeFile(filePath string, fileContents []string) {
     err := os.WriteFile(filePath, []byte(newContent), 0644)
 
     if err != nil {
-        fmt.Println("There was an issue updating " + filePath)
+        pterm.Warning.Println("There was an issue updating " + filePath)
     }
 }
 
@@ -332,7 +333,7 @@ func modifyTheme() {
         fileContents, err := openFile(file)
 
         if err != nil {
-            fmt.Println("There was an issue updating " + file)
+            pterm.Warning.Println("File not available for modification: " + file)
             continue
         }
 
@@ -343,6 +344,8 @@ func modifyTheme() {
         }
 
         lines := code.([]interface{})
+
+        modificationMade := false
 
         OUTER:
         for _, line := range lines {
@@ -369,8 +372,13 @@ func modifyTheme() {
             found := false
 
             for index, currentLine := range fileContents {
-                if (strings.Contains(currentLine, target)) {
+                // Code swap already happened
+                if mode == "replace" && strings.Contains(currentLine, config["code"].(string)) {
                     found = true
+                    continue OUTER
+                } else if strings.Contains(currentLine, target) {
+                    found = true
+                    modificationMade = true
 
                     switch mode {
                     case "append":
@@ -389,12 +397,18 @@ func modifyTheme() {
                 }
             }
 
-            if !found {
-                fmt.Println("Modification target was missing for " + file)
+            if !found && mode != "remove" && mode != "replace" {
+                pterm.Warning.Println("Code could not be added to " + file)
+            }
+
+            if !found && mode == "replace" {
+                pterm.Info.Println("A code replacement couldn't be made within " + file)
             }
         }
 
-        writeFile(file, fileContents)
+        if modificationMade {
+            writeFile(file, fileContents)
+        }
     }
 }
 
@@ -407,14 +421,14 @@ func downloadBlock() {
     blockUrl := "https://arcadiadocs.com/download.php?target=" + archive
     resp, err := http.Get(blockUrl)
     if err != nil {
-        fmt.Printf("Block not found")
+        pterm.Error.Println("Block not found")
         os.Exit(0)
     }
 
     defer resp.Body.Close()
 
     if resp.StatusCode != 200 {
-        fmt.Printf("Block not found")
+        pterm.Error.Println("Block not found")
         os.Exit(0)
     }
 
@@ -470,6 +484,11 @@ func install() {
     // archives[0] = "faq"
     // archives[1] = "nav-bar"
     // archives[2] = "image-slider"
+    if len(os.Args) <= 2 {
+        pterm.Error.Println("Please specify a block")
+        return
+    }
+
     archives := os.Args[2:]
 
     // Step 1. Check if Arcadia theme
@@ -498,7 +517,7 @@ func install() {
         // Step 7. Clean up
         cleanUp()
 
-        fmt.Println(manifest["name"].(string) + " has been installed")
+        pterm.Success.Println(manifest["name"].(string) + " has been installed")
     }
 }
 
@@ -508,6 +527,10 @@ func unpack() {
 
     // Step 2: Catalog zips in the project root
     archives := catalogArchives()
+
+    if len(archives) == 0 {
+        pterm.Info.Println("No blocks found")
+    }
 
     for _, file := range archives {
         archive = file[:len(file) - 4]
@@ -529,7 +552,7 @@ func unpack() {
         // Step 7. Clean up
         cleanUp()
 
-        fmt.Println(manifest["name"].(string) + " has been installed")
+        pterm.Success.Println(manifest["name"].(string) + " has been installed")
     }
 }
 
@@ -552,12 +575,12 @@ func checkVersion() {
 }
 
 func version() {
-    fmt.Println(appVersion)
+    pterm.DefaultBasicText.Println("You are currently running version: " + pterm.LightMagenta(appVersion))
 }
 
 func update() {
     if len(updateAvailable) == 0 {
-        fmt.Println("You are on the latest version")
+        pterm.DefaultBasicText.Println("You are on the latest version")
         return
     }
 
@@ -567,7 +590,7 @@ func update() {
         ext = ".exe"
     }
 
-    fmt.Println("Updating...")
+    pterm.DefaultBasicText.Println("Updating...")
 
     appPath, err := os.Executable()
 
@@ -578,7 +601,7 @@ func update() {
     resp, err := http.Get(updateAvailable)
 
     if err != nil {
-        fmt.Println("Update failed")
+        pterm.Error.Println("Update failed")
         return
     }
 
@@ -601,7 +624,7 @@ func update() {
     err = os.Rename(tmpName, currentName)
     check(err)
 
-    fmt.Println("Update complete")
+    pterm.Success.Println("Update complete")
 }
 
 func updateCleanup() {
@@ -623,14 +646,18 @@ func updateCleanup() {
 }
 
 func main() {
-    // command := "update"
-    command := os.Args[1];
+    command := "help"
+
+    if len(os.Args) > 1 {
+        command = os.Args[1]
+    }
 
     checkVersion()
     updateCleanup()
 
     if command != "update" && len(updateAvailable) > 0 {
-        fmt.Println("Update Available; Run arc update to install")
+        pterm.Info.Println("Update Available\nRun " + pterm.LightMagenta("arc update") + " to install")
+        fmt.Println()
     }
 
     switch command {
@@ -642,7 +669,15 @@ func main() {
         version()
     case "update":
         update()
+    case "help":
+        pterm.DefaultTable.WithHasHeader().WithData(pterm.TableData{
+            {"Command", "Description"},
+            {"install", "Install 1 or more blocks"},
+            {"unpack", "Extract already downloaded blocks"},
+            {"version", "Display the current app version"},
+            {"update", "Perform an update on arc"},
+        }).Render()
     default:
-        fmt.Println("Invalid command.")
+        pterm.Error.Println("Invalid command")
     }
 }

@@ -36,6 +36,12 @@ arc unpack
 arc update
 ```
 
+### Display a list of available commands
+
+```bash
+arc help
+```
+
 ## Manifest Format
 
 | Index         | Purpose                         | Required |
