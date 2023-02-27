@@ -350,6 +350,7 @@ func modifyTheme() {
         OUTER:
         for _, line := range lines {
             if _, ok := line.(string); ok {
+                modificationMade = true
                 fileContents = append(fileContents, line.(string))
                 continue
             }
@@ -359,6 +360,7 @@ func modifyTheme() {
             target, exists := config["target"].(string)
 
             if !exists {
+                modificationMade = true
                 fileContents = append(fileContents, config["code"].(string))
                 continue
             }
