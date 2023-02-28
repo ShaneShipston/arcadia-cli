@@ -104,18 +104,18 @@ GOOS=darwin GOARCH=arm64 go build -o bin/arc-macos-arm arc.go
 
 ## Changelog
 
-### 0.1.0 Beta (Unreleased)
+### 0.1.0
 
 - Install blocks
 - Install Components
 - Unpack command
 - Windows build
+- MacOS Install
 - Documentation
 - Update check
 
 ## Roadmap
 
-- MacOS Install
 - Install Foundations
 - Install Sections
 - Install Plugins
