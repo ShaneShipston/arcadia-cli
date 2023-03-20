@@ -18,7 +18,7 @@ import (
     "time"
 )
 
-var appVersion = "0.1.0"
+var appVersion = "0.2.0"
 var archive = ""
 var updateAvailable = ""
 var manifest map[string]interface{}
@@ -68,6 +68,10 @@ func finalLayout() string {
 }
 
 func checkInstalled() {
+    if manifest["contents"] != "block" && manifest["contents"] != "component" {
+        return
+    }
+
     contentFile := filepath.Join("acf-json", groupName())
     content, err := os.ReadFile(contentFile)
 
@@ -261,6 +265,10 @@ func writeFile(filePath string, fileContents []string) {
 }
 
 func injectLayout() {
+    if manifest["contents"] != "block" && manifest["contents"] != "component" {
+        return
+    }
+
     contentFile := filepath.Join("acf-json", groupName())
     content, err := openFile(contentFile)
     now := time.Now()
@@ -532,6 +540,7 @@ func unpack() {
 
     if len(archives) == 0 {
         pterm.Info.Println("No blocks found")
+        return
     }
 
     for _, file := range archives {

@@ -104,6 +104,10 @@ GOOS=darwin GOARCH=arm64 go build -o bin/arc-macos-arm arc.go
 
 ## Changelog
 
+### 0.2.0
+
+- Install Foundations
+
 ### 0.1.0
 
 - Install blocks
@@ -116,7 +120,6 @@ GOOS=darwin GOARCH=arm64 go build -o bin/arc-macos-arm arc.go
 
 ## Roadmap
 
-- Install Foundations
 - Install Sections
 - Install Plugins
 - Unpack nested zip files
