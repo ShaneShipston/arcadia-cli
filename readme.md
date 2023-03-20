@@ -120,6 +120,7 @@ GOOS=darwin GOARCH=arm64 go build -o bin/arc-macos-arm arc.go
 
 ## Roadmap
 
+- Match indentation when doing modifications
 - Install Sections
 - Install Plugins
 - Unpack nested zip files
