@@ -431,7 +431,7 @@ func downloadBlock() {
     blockUrl := "https://arcadiadocs.com/download.php?target=" + archive
     resp, err := http.Get(blockUrl)
     if err != nil {
-        pterm.Error.Println("Block not found")
+        pterm.Error.Println("Server Connection Issue")
         os.Exit(0)
     }
 
